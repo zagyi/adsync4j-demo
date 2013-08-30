@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:c="http://www.springframework.org/schema/c"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="
+            http://www.springframework.org/schema/beans   http://www.springframework.org/schema/beans/spring-beans.xsd
+            http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+       ">
+
+    <import resource="classpath:/spring/jpa-context.xml"/>
+
+    <context:component-scan base-package="org.adsync4j"/>
+
+    <bean class="org.adsync4j.impl.ActiveDirectorySyncServiceImpl">
+        <constructor-arg name="dcaKey" value="default"/>
+        <constructor-arg name="ldapClient" ref="ldapClient"/>
+        <constructor-arg name="affiliationRepository" ref="affiliationRepository"/>
+    </bean>
+
+    <bean id="ldapClient" class="org.adsync4j.unboundid.UnboundIDLdapClient">
+        <constructor-arg name="connectionFactory">
+            <bean class="org.adsync4j.unboundid.DefaultUnboundIDConnectionFactory"
+                  c:ldapConnectionDetailsRepository-ref="affiliationRepository"
+                  c:key="default">
+            </bean>
+        </constructor-arg>
+    </bean>
+
+</beans>
