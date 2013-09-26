@@ -8,9 +8,11 @@
         </encoder>
     </appender>
 
+    <!--
     <logger name="org.adsync4j" level="DEBUG" additivity="false">
         <appender-ref ref="STDOUT"/>
     </logger>
+    -->
 
     <root level="WARN">
         <appender-ref ref="STDOUT"/>

@@ -1,9 +1,9 @@
 package org.adsync4j.demo;
 
 import com.unboundid.ldap.sdk.Attribute;
-import org.adsync4j.EntryProcessor;
 import org.adsync4j.demo.entity.Employee;
 import org.adsync4j.demo.jpa.EmployeeRepository;
+import org.adsync4j.spi.EntryProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.UUID;
 
-import static org.adsync4j.UUIDUtils.bytesToUUID;
+import static org.adsync4j.impl.UUIDUtils.bytesToUUID;
 
 /**
  * This class implements the {@link EntryProcessor} callback interface the processNew/Changed/Deleted methods of which are

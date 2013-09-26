@@ -11,16 +11,20 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * JPA entity class implementing the similarly named {@link org.adsync4j.DomainControllerAffiliation
+ * JPA entity class implementing the similarly named {@link org.adsync4j.spi.DomainControllerAffiliation
  * DomainControllerAffiliation} interface.
  */
 @Entity
-public class DomainControllerAffiliation implements org.adsync4j.DomainControllerAffiliation {
+public class DomainControllerAffiliation implements org.adsync4j.spi.DomainControllerAffiliation {
 
     private static final Splitter SPLITTER = Splitter.on(',').omitEmptyStrings().trimResults();
 
     @Id
     private String key;
+
+    private String url;
+    private String bindUser;
+    private String bindPassword;
 
     private String invocationId;
     private Long highestCommittedUSN;
@@ -28,22 +32,15 @@ public class DomainControllerAffiliation implements org.adsync4j.DomainControlle
     private String searchFilter;
     private String searchDeletedObjectsFilter;
     private String attributesToSync;
-
-    private String protocol;
-    private String host;
-    private int port;
-    private String bindUser;
-    private String bindPassword;
     private String rootDN;
 
     public static DomainControllerAffiliation fromMap(Map<String, String> properties) {
         DomainControllerAffiliation result = new DomainControllerAffiliation();
 
-        result.protocol = properties.get("protocol");
-        result.host = properties.get("host");
-        result.port = Integer.valueOf(properties.get("port"));
+        result.url = properties.get("url");
         result.bindUser = properties.get("bindUser");
         result.bindPassword = properties.get("bindPassword");
+
         result.rootDN = properties.get("rootDN");
 
         String invocationId = properties.get("invocationId");
@@ -72,12 +69,10 @@ public class DomainControllerAffiliation implements org.adsync4j.DomainControlle
                       .add("searchFilter", searchFilter)
                       .add("searchDeletedObjectsFilter", searchDeletedObjectsFilter)
                       .add("attributesToSync", attributesToSync)
-                      .add("protocol", protocol)
-                      .add("host", host)
-                      .add("port", port)
+                      .add("rootDN", rootDN)
+                      .add("url", url)
                       .add("bindUser", bindUser)
                       .add("bindPassword", bindPassword)
-                      .add("rootDN", rootDN)
                       .toString();
     }
 
@@ -116,18 +111,8 @@ public class DomainControllerAffiliation implements org.adsync4j.DomainControlle
     }
 
     @Override
-    public String getProtocol() {
-        return protocol;
-    }
-
-    @Override
-    public String getHost() {
-        return host;
-    }
-
-    @Override
-    public int getPort() {
-        return port;
+    public String getUrl() {
+        return url;
     }
 
     @Override
@@ -143,6 +128,18 @@ public class DomainControllerAffiliation implements org.adsync4j.DomainControlle
     @Override
     public String getRootDN() {
         return rootDN;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
+    public void setBindUser(String bindUser) {
+        this.bindUser = bindUser;
+    }
+
+    public void setBindPassword(String bindPassword) {
+        this.bindPassword = bindPassword;
     }
 
     public DomainControllerAffiliation setKey(String key) {
@@ -177,31 +174,6 @@ public class DomainControllerAffiliation implements org.adsync4j.DomainControlle
 
     public DomainControllerAffiliation setAttributesToSync(String attributesToSync) {
         this.attributesToSync = attributesToSync;
-        return this;
-    }
-
-    public DomainControllerAffiliation setProtocol(String protocol) {
-        this.protocol = protocol;
-        return this;
-    }
-
-    public DomainControllerAffiliation setHost(String host) {
-        this.host = host;
-        return this;
-    }
-
-    public DomainControllerAffiliation setPort(int port) {
-        this.port = port;
-        return this;
-    }
-
-    public DomainControllerAffiliation setBindUser(String bindUser) {
-        this.bindUser = bindUser;
-        return this;
-    }
-
-    public DomainControllerAffiliation setBindPassword(String bindPassword) {
-        this.bindPassword = bindPassword;
         return this;
     }
 

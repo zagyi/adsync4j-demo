@@ -19,11 +19,11 @@
     </bean>
 
     <bean id="ldapClient" class="org.adsync4j.unboundid.UnboundIDLdapClient">
+        <property name="pageSize" value="100"/>
         <constructor-arg name="connectionFactory">
             <bean class="org.adsync4j.unboundid.DefaultUnboundIDConnectionFactory"
-                  c:ldapConnectionDetailsRepository-ref="affiliationRepository"
-                  c:key="default">
-            </bean>
+                  c:dcaKey="default"
+                  c:affiliationRepository-ref="affiliationRepository"/>
         </constructor-arg>
     </bean>
 

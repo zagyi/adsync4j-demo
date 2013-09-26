@@ -1,8 +1,8 @@
 package org.adsync4j.demo;
 
 import com.unboundid.ldap.sdk.Attribute;
-import org.adsync4j.InitialFullSyncRequiredException;
-import org.adsync4j.InvocationIdMismatchException;
+import org.adsync4j.api.InitialFullSyncRequiredException;
+import org.adsync4j.api.InvocationIdMismatchException;
 import org.adsync4j.demo.entity.DomainControllerAffiliation;
 import org.adsync4j.demo.jpa.DomainControllerAffiliationRepository;
 import org.adsync4j.demo.jpa.EmployeeRepository;
@@ -11,11 +11,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.stereotype.Component;
 
-import java.io.*;
+import java.io.IOException;
 import java.util.Map;
-import java.util.Properties;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static org.adsync4j.demo.Utils.loadPropertiesFile;
+import static org.adsync4j.demo.Utils.printClassPathResource;
 
 /**
  * Main entry point of the application. Implements the following workflow:
@@ -33,14 +34,14 @@ public class ADSync {
     private static final String MAIN_APP_CTX_LOCATION = "classpath:spring/application-context.xml";
     public static final String DCA_PROPERTIES_TEMPLATE = "/dcaffiliation_template.properties";
 
-    private final ActiveDirectorySyncServiceImpl<String, Attribute> _syncService;
+    private final ActiveDirectorySyncServiceImpl<String, DomainControllerAffiliation, Attribute> _syncService;
     private final DomainControllerAffiliationRepository _dcaRepository;
     private final EmployeeRepository _employeeRepository;
     private final EmployeeProcessor _employeeProcessor;
 
     @Autowired
     public ADSync(
-            ActiveDirectorySyncServiceImpl<String, Attribute> syncService,
+            ActiveDirectorySyncServiceImpl<String, DomainControllerAffiliation, Attribute> syncService,
             DomainControllerAffiliationRepository dcaRepository,
             EmployeeRepository employeeRepository,
             EmployeeProcessor employeeProcessor)
@@ -60,40 +61,48 @@ public class ADSync {
         }
     }
 
-    private static ADSync createInstance() {
+    private static ADSync createInstance() throws IOException {
         return new ClassPathXmlApplicationContext(MAIN_APP_CTX_LOCATION).getBean(ADSync.class);
     }
 
     private void sync(String dcaPropertiesFileName) throws IOException {
         ensureDCA(dcaPropertiesFileName);
 
-        boolean isFullSyncNeeded = true;
-
         try {
-            System.out.println("Trying an incremental sync...");
+            System.out.println("Attempting an incremental sync...");
             _syncService.incrementalSync(_employeeProcessor);
             System.out.println("Incremental sync successfully done.");
-            isFullSyncNeeded = false;
+            return;
         } catch (InvocationIdMismatchException e) {
-            System.out.println("ID of the Active Directory database has been changed. Has the server been restored from a " +
-                               "backup?");
+            System.out.println("The ID of the domain controller has been changed (Has it been restored after a failure?), " +
+                               "therefore a full re-sync is required now.");
             _employeeRepository.deleteAllInBatch();
         } catch (InitialFullSyncRequiredException e) {
-            System.out.println("It seems to be the first sync from this server, cannot start with an incremental sync.");
+            System.out.println("It seems to be the first sync operation with this domain controller, " +
+                               "an initial full sync is required.");
         }
 
-        if (isFullSyncNeeded) {
-            System.out.println("Performing a full sync.");
-            _syncService.fullSync(_employeeProcessor);
-        }
+        System.out.println("Performing a full sync.");
+        _syncService.fullSync(_employeeProcessor);
+        System.out.println("Full sync successfully done.");
     }
 
+    /**
+     * Checks if the "default" Domain Controller Affiliation is already persisted. In case it's not (which means it's the
+     * first execution of the program), the specified properties file is parsed and the DCA is saved into the repository.
+     */
     private void ensureDCA(String dcaPropertiesFileName) throws IOException {
         if (_dcaRepository.findOne("default") == null) {
             assertPropertiesFileIsSpecified(dcaPropertiesFileName);
-            DomainControllerAffiliation dca = loadDCAFromPropertiesFile(dcaPropertiesFileName);
+            Map<String, String> dcaProperties = loadPropertiesFile(dcaPropertiesFileName);
+            DomainControllerAffiliation dca = DomainControllerAffiliation.fromMap(dcaProperties);
             dca.setKey("default");
             _dcaRepository.save(dca);
+        } else {
+            if (dcaPropertiesFileName != null) {
+                System.out.println("WARNING! The database already contains the Domain Controller Affiliation. " +
+                                   "The DCA properties file you specified will be ignored!");
+            }
         }
     }
 
@@ -101,32 +110,10 @@ public class ADSync {
         if (isNullOrEmpty(dcaPropertiesFileName)) {
             System.out.println("Before synchronizing from Active Directory, you will need to specify a\n" +
                                "properties file that describes a Domain Controller Affiliation record.\n" +
-                               "This is only necessary before the first run, as the affiliation record is persisted.");
+                               "This is only necessary before the first run, after which the affiliation record is persisted.");
             System.out.println("\nUse the following template to create the properties file:\n");
-
             printClassPathResource(DCA_PROPERTIES_TEMPLATE);
             System.exit(1);
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    private static DomainControllerAffiliation loadDCAFromPropertiesFile(String fileName) throws IOException {
-        Properties properties = new Properties();
-        properties.load(new FileInputStream(fileName));
-        return DomainControllerAffiliation.fromMap((Map) properties);
-    }
-
-    private static void printClassPathResource(String resourceName) {
-        try(InputStream stream = ADSync.class.getResourceAsStream(resourceName)) {
-            BufferedReader in = new BufferedReader(new InputStreamReader(stream));
-            String line = in.readLine();
-            while (line != null) {
-                System.out.println(line);
-                line = in.readLine();
-
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 }

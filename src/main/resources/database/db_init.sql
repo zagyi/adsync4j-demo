@@ -4,14 +4,12 @@ CREATE TABLE IF NOT EXISTS DomainControllerAffiliation (
   bindPassword               VARCHAR(255),
   bindUser                   VARCHAR(255),
   highestCommittedUSN        BIGINT,
-  host                       VARCHAR(255),
   invocationId               VARCHAR(255),
-  port                       INTEGER      NOT NULL,
-  protocol                   VARCHAR(255),
   rootDN                     VARCHAR(255),
   searchDeletedObjectsFilter VARCHAR(255),
   searchFilter               VARCHAR(255),
   syncBaseDN                 VARCHAR(255),
+  url                        VARCHAR(255),
   PRIMARY KEY (key)
 );
 

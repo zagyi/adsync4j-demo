@@ -6,3 +6,5 @@
 *.ipr
 *.iws
 /.idea/
+
+adsync4j-demo.sh
